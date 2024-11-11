@@ -57,13 +57,13 @@ df_preferencias = pd.read_sql(query_preferencias, engine)
 
 user_encoder = LabelEncoder()
 item_encoder = LabelEncoder()
-df_preferencias['id_usuario'] = user_encoder.fit_transform(df_preferencias['id_usuario'])
-df_preferencias['id_evento'] = item_encoder.fit_transform(df_preferencias['id_evento'])
+df_preferencias['user_id'] = user_encoder.fit_transform(df_preferencias['user_id'])
+df_preferencias['event_id'] = item_encoder.fit_transform(df_preferencias['event_id'])
 
     #Creamos grafo
     # Crear vértices de las interacciones usuario-producto
 edge_index = torch.tensor(
-    np.array([df_preferencias['id_usuario'].values, df_preferencias['id_evento'].values]), 
+    np.array([df_preferencias['user_id'].values, df_preferencias['event_id'].values]), 
     dtype=torch.long
 )
 
@@ -74,8 +74,8 @@ edge_attr = torch.tensor(df_preferencias['rating'].values, dtype=torch.float)
     # Crear PyTorch Geometric data object
 data = Data(edge_index=edge_index, edge_attr=edge_attr)
 
-num_usuarios = df_preferencias['id_usuario'].nunique()
-num_items = df_preferencias['id_evento'].nunique()
+num_usuarios = df_preferencias['user_id'].nunique()
+num_items = df_preferencias['event_id'].nunique()
 num_nodos = num_usuarios + num_items
 
     # Crear características de los nodos
@@ -127,7 +127,7 @@ async def get_recommendations(recommendations: Recommendations):
 async def recommend(user: UserRecommendation): 
     user_id = user.user_id
         # Obtener índices de productos con los que el usuario no interactuó aún
-    uninteracted_items = torch.tensor([i + num_usuarios for i in range(num_items) if i not in df_preferencias[df_preferencias['id_usuario'] == user_id]['id_evento'].values])
+    uninteracted_items = torch.tensor([i + num_usuarios for i in range(num_items) if i not in df_preferencias[df_preferencias['user_id'] == user_id]['event_id'].values])
 
     # Crear edge_index para user_data
     user_edge_index = torch.tensor([[user_id] * len(uninteracted_items), uninteracted_items], dtype=torch.long)
